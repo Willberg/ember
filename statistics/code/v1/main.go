@@ -16,7 +16,7 @@ import (
 )
 
 /**
-  统计项目中每种语言的行数和占比
+  统计项目中每种语言的行数和占比,使用到协程同步WaitGroup,锁，并发以及基本的map操作
 */
 var (
 	singleProject = flag.Bool("-s", true, "是否单独项目")
