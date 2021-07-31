@@ -10,18 +10,21 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
 
 /**
-  统计项目中每种语言的行数和占比,使用到协程同步WaitGroup,锁，并发以及基本的map操作
+  统计项目中每种语言的行数和占比,使用到协程同步WaitGroup,锁，并发,递归以及基本的map操作
 */
 var (
-	singleProject = flag.Bool("-s", true, "是否单独项目")
-	fpath         = flag.String("-p", "/home/john/tmp/project/", "项目位置")
+	singleProject = flag.Bool("-s", false, "是否单独项目")
+	fpath         = flag.String("-p", "/home/john/mine/workplace/go", "项目位置")
 	rnum          = flag.Int("-n", 10, "并发数")
+	expDir        = flag.String("-xd", "org|com|bin|img", "去除目录")
+	expFile       = flag.String("-xf", "problem|netcat|findlinks", "去除文件")
 	tl            = new(fiList)
 	me            = new(memo)
 	n             sync.WaitGroup
@@ -125,15 +128,21 @@ func main() {
 		}
 
 		for _, p := range folds {
-			if p.Name()[:1] == "." || strings.Contains(strings.ToLower(p.Name()), "png") {
+			if p.Name()[:1] == "." {
 				continue
 			}
 
 			fullName := *fpath + string(os.PathSeparator) + p.Name()
 			if p.IsDir() {
+				if isMatch, err := regexp.MatchString(*expDir, p.Name()); err == nil && isMatch {
+					continue
+				}
 				l := getAllFiles(p.Name(), fullName)
 				tl.putAll(l)
 			} else {
+				if isMatch, err := regexp.MatchString(*expFile, p.Name()); err == nil && isMatch {
+					continue
+				}
 				item := new(listItem)
 				item.project = p.Name()
 				item.link = fullName
@@ -169,6 +178,7 @@ func main() {
 			percent := float64(v2.lineNum) / float64(total) * 100
 			fmt.Printf("%s: %d, %.2f%% \n", k2, v2.lineNum, percent)
 		}
+		fmt.Println()
 	}
 
 	fmt.Printf("use time: %d ms", time.Since(t).Milliseconds())
@@ -183,14 +193,20 @@ func getAllFiles(project, dir string) *list.List {
 
 func getAllFileFullName(project, dir string, l *list.List) {
 	for _, entry := range dirents(dir) {
-		if entry.Name()[:1] == "." || strings.Contains(strings.ToLower(entry.Name()), "png") {
+		if entry.Name()[:1] == "." {
 			continue
 		}
 
 		subdir := filepath.Join(dir, entry.Name())
 		if entry.IsDir() {
+			if isMatch, err := regexp.MatchString(*expDir, entry.Name()); err == nil && isMatch {
+				continue
+			}
 			getAllFileFullName(project, subdir, l)
 		} else {
+			if isMatch, err := regexp.MatchString(*expFile, entry.Name()); err == nil && isMatch {
+				continue
+			}
 			item := new(listItem)
 			item.project = project
 			item.link = subdir
