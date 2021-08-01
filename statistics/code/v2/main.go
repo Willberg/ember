@@ -35,7 +35,7 @@ type linkItem struct {
 	link    string
 }
 
-// 通过通道来进行同步
+// 通过通道来进行通信, 无锁并发；WaitGroup来同步;递归和map操作；效率高于v1
 func main() {
 	t := time.Now()
 	flag.Parse()
@@ -58,7 +58,11 @@ func main() {
 			project = getProjectName(*fpath)
 		}
 		dir := filepath.Join(*fpath, f.Name())
-		go wakDir(project, dir, &n, fileInfos)
+		if f.IsDir() {
+			go wakDir(project, dir, &n, fileInfos)
+		} else {
+			go wakFile(project, dir, &n, fileInfos)
+		}
 	}
 
 	// 关闭文件统计通道，结束下面的循环
@@ -146,6 +150,25 @@ func wakDir(project, dir string, n *sync.WaitGroup, fileInfos chan item) {
 			readFile(project, subdir, fileInfos)
 		}
 	}
+}
+
+func wakFile(project, fp string, n *sync.WaitGroup, fileInfos chan item) {
+	// 获取令牌
+	sema <- struct{}{}
+	// 释放令牌
+	defer func() {
+		<-sema
+	}()
+
+	defer n.Done()
+
+	idx := strings.LastIndex(fp, string(os.PathSeparator))
+	fname := fp[idx+1:]
+	if fname[:1] == "." {
+		return
+	}
+
+	readFile(project, fp, fileInfos)
 }
 
 func dirents(dir string) []os.FileInfo {
