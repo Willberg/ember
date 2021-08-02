@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	singleProject = flag.Bool("-s", false, "是否单独项目")
-	fpath         = flag.String("-p", "/home/john/mine/workplace/go", "项目位置")
-	rnum          = flag.Int("-n", 10, "并发数")
-	expDir        = flag.String("-xd", "org|com|bin|img|vendor", "去除目录")
-	expFile       = flag.String("-xf", "problem|netcat|findlinks", "去除文件")
+	singleProject = flag.Bool("s", false, "是否单独项目")
+	fpath         = flag.String("p", "/home/john/mine/workplace/go", "项目位置")
+	rnum          = flag.Int("n", 10, "并发数")
+	expDir        = flag.String("xd", "org|com|bin|img|vendor", "去除目录")
+	expFile       = flag.String("xf", "problem|netcat|findlinks", "去除文件")
 	sema          = make(chan struct{}, *rnum)
 )
 

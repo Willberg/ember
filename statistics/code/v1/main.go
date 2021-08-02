@@ -20,11 +20,11 @@ import (
   统计项目中每种语言的行数和占比,使用到协程同步WaitGroup,锁，并发,递归以及基本的map操作
 */
 var (
-	singleProject = flag.Bool("-s", false, "是否单独项目")
-	fpath         = flag.String("-p", "/home/john/mine/workplace/go", "项目位置")
-	rnum          = flag.Int("-n", 10, "并发数")
-	expDir        = flag.String("-xd", "org|com|bin|img|vendor", "去除目录")
-	expFile       = flag.String("-xf", "problem|netcat|findlinks", "去除文件")
+	singleProject = flag.Bool("s", false, "是否单独项目")
+	fpath         = flag.String("p", "/home/john/mine/workplace/go", "项目位置")
+	rnum          = flag.Int("n", 10, "并发数")
+	expDir        = flag.String("xd", "org|com|bin|img|vendor", "去除目录")
+	expFile       = flag.String("xf", "problem|netcat|findlinks", "去除文件")
 	tl            = new(fiList)
 	me            = new(memo)
 	n             sync.WaitGroup
