@@ -193,6 +193,7 @@ func readFile(project, link string, fileInfos chan item) {
 		fmt.Printf("open file %s err, err: %v\n", link, err)
 		return
 	}
+	defer f.Close()
 
 	var lineNum int64
 	isRead := true

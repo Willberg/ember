@@ -241,6 +241,7 @@ func countFile() {
 		f, err := os.Open(link)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "open file %s err, err: %v\n", link, err)
+			f.Close()
 			continue
 		}
 
@@ -263,6 +264,7 @@ func countFile() {
 				lineNum++
 			}
 		}
+		f.Close()
 
 		if isRead {
 			me.put(pName, language, lineNum)
