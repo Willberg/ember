@@ -30,11 +30,6 @@ type item struct {
 	lineNum  int64
 }
 
-type linkItem struct {
-	project string
-	link    string
-}
-
 // 通过通道来进行通信, 无锁并发；WaitGroup来同步;递归和map操作；效率高于v1
 func main() {
 	t := time.Now()
