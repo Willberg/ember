@@ -100,7 +100,7 @@ func save(debt float64) {
 	}
 
 	if len(debts) == 0 {
-		r, err := db.Exec("insert into us_debt(`date`, debt, create_time) values(?, ?, ?)", date, debt, time.Now().Unix())
+		r, err := db.Exec("insert into us_debt(`date`, debt, create_time) values(?, ?, ?)", date, debt, time.Now().UnixNano()/1e6)
 		if err != nil {
 			glog.Error("exec failed, %v", err)
 			return
