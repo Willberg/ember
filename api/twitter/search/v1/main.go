@@ -35,8 +35,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	encondeStr := url2.QueryEscape("epidemic situation")
-	url := "https://api.twitter.com/2/tweets/search/recent?query=" + encondeStr
+	encodeStr := url2.QueryEscape("epidemic situation")
+	url := "https://api.twitter.com/2/tweets/search/recent?query=" + encodeStr
 	method := "GET"
 
 	client := &http.Client{}
