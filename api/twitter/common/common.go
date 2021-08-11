@@ -4,6 +4,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"io/ioutil"
 	"log"
+	"sync"
 )
 
 type Env struct {
@@ -14,22 +15,39 @@ type Env struct {
 	Ats string `yaml:"accessTokenSecret"`
 }
 
-var e = Env{}
+type envS struct {
+	env *Env
+	mu  sync.Mutex
+}
+
+var es = envS{env: nil}
 
 func Parse(p string) *Env {
+	if es.env != nil {
+		return es.env
+	}
+
+	es.mu.Lock()
+	defer es.mu.Unlock()
+
+	if es.env == nil {
+		es.env = &Env{}
+	}
+
 	data, err := ioutil.ReadFile(p)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = yaml.Unmarshal(data, &e)
+	err = yaml.Unmarshal(data, &es.env)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return &e
+	return es.env
 }
 
 func GetBearer(p string) string {
-	return "Bearer " + e.Bt
+	es.env = Parse(p)
+	return "Bearer " + es.env.Bt
 }
