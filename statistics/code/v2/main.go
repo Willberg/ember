@@ -16,11 +16,13 @@ import (
 )
 
 var (
-	singleProject = flag.Bool("s", false, "是否单独项目")
-	fpath         = flag.String("p", "/home/john/mine/workplace/go", "项目位置")
+	singleProject = flag.Bool("s", true, "是否单独项目")
+	fpath         = flag.String("p", "/home/john/mine/workplace/c", "项目位置")
 	rnum          = flag.Int("n", 10, "并发数")
-	expDir        = flag.String("xd", "org|com|bin|img|vendor", "去除目录")
-	expFile       = flag.String("xf", "problem|netcat|findlinks", "去除文件")
+	expDir        = flag.String("xd", "tests|fail2ban|venv|bin|vendor|kernel_liteos_a", "去除目录")
+	expFile       = flag.String("xf", "LICENSE|Dockerfile", "去除文件")
+	checkFile     = flag.String("f", "h,c,h,hpp,hxx,cpp,cc,cxx,c++", "待查文件类型")
+	checkFileSet  = strings.ToLower(*checkFile)
 	sema          = make(chan struct{}, *rnum)
 )
 
@@ -47,6 +49,26 @@ func main() {
 		log.Fatal("目录不存在")
 	}
 	for _, f := range folds {
+		// 如果是隐藏文件或文件夹，直接过滤
+		if strings.HasPrefix(f.Name(), ".") {
+			continue
+		}
+
+		// 如果待查文件类型存在，则只考虑对应类型的文件
+		if !f.IsDir() && isFilterFileWithSuffix(f.Name()) {
+			continue
+		}
+
+		if f.IsDir() {
+			if isFilter(*expDir, f.Name()) {
+				continue
+			}
+		} else {
+			if isFilter(*expFile, f.Name()) {
+				continue
+			}
+		}
+
 		n.Add(1)
 		project := f.Name()
 		if *singleProject {
@@ -81,6 +103,36 @@ loop:
 
 	printResult(result)
 	fmt.Printf("use time: %d ms", time.Since(t).Milliseconds())
+}
+
+func getFileSuffix(f string) string {
+	idx := strings.LastIndex(f, ".")
+	if idx > 0 {
+		return f[idx+1:]
+	} else {
+		return ""
+	}
+}
+
+func isFilterFileWithSuffix(f string) bool {
+	if len(checkFileSet) > 0 {
+		if suffix := getFileSuffix(f); len(suffix) > 0 {
+			suffix = strings.ToLower(suffix)
+			return !strings.Contains(checkFileSet, suffix)
+		}
+		return true
+	}
+
+	return false
+}
+
+func isFilter(t, f string) bool {
+	if len(t) > 0 {
+		if isMatch, err := regexp.MatchString(t, f); err == nil && isMatch {
+			return true
+		}
+	}
+	return false
 }
 
 func getProjectName(n string) string {
@@ -126,22 +178,29 @@ func wakDir(project, dir string, n *sync.WaitGroup, fileInfos chan item) {
 	defer n.Done()
 
 	for _, entry := range dirents(dir) {
-		if entry.Name()[:1] == "." {
+		// 如果是隐藏文件或文件夹，直接过滤
+		if strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 
 		subdir := filepath.Join(dir, entry.Name())
 		if entry.IsDir() {
-			if isMatch, err := regexp.MatchString(*expDir, entry.Name()); err == nil && isMatch {
+			if isFilter(*expDir, entry.Name()) {
 				continue
 			}
 
 			n.Add(1)
 			go wakDir(project, subdir, n, fileInfos)
 		} else {
-			if isMatch, err := regexp.MatchString(*expFile, entry.Name()); err == nil && isMatch {
+			if isFilter(*expFile, entry.Name()) {
 				continue
 			}
+
+			// 如果待查文件类型存在，则只考虑对应类型的文件
+			if isFilterFileWithSuffix(entry.Name()) {
+				continue
+			}
+
 			readFile(project, subdir, fileInfos)
 		}
 	}
@@ -156,12 +215,6 @@ func wakFile(project, fp string, n *sync.WaitGroup, fileInfos chan item) {
 	}()
 
 	defer n.Done()
-
-	idx := strings.LastIndex(fp, string(os.PathSeparator))
-	fname := fp[idx+1:]
-	if fname[:1] == "." {
-		return
-	}
 
 	readFile(project, fp, fileInfos)
 }
