@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -75,10 +76,27 @@ func main() {
 			project = getProjectName(*fpath)
 		}
 		dir := filepath.Join(*fpath, f.Name())
-		if f.IsDir() {
-			go wakDir(project, dir, &n, fileInfos)
-		} else {
+		switch mode := f.Mode(); {
+		case mode.IsRegular():
 			go wakFile(project, dir, &n, fileInfos)
+		case mode.IsDir():
+			go wakDir(project, dir, &n, fileInfos)
+		case mode&os.ModeSymlink != 0:
+			go func() {
+				abPath, err := filepath.EvalSymlinks(dir)
+				if err != nil {
+					fmt.Printf("eval symlinks error %s err, err: %v\n", dir, err)
+					return
+				}
+				if !strings.Contains(abPath, project) {
+					n.Add(1)
+					go wakDir(project, dir, &n, fileInfos)
+				}
+			}()
+		default:
+			go func() {
+				fmt.Printf("unsovled link: %s \n", dir)
+			}()
 		}
 	}
 
@@ -157,16 +175,28 @@ func putResult(result map[string]map[string]int64, im item) {
 }
 
 func printResult(result map[string]map[string]int64) {
-	// print records
-	for k1, v1 := range result {
+	// 按项目名排序
+	proSlice := make([]string, 0, len(result))
+	for k := range result {
+		proSlice = append(proSlice, k)
+	}
+	sort.Strings(proSlice)
+
+	for _, k1 := range proSlice {
 		fmt.Printf("%s: \n", k1)
 		var total int64
-		for _, v2 := range v1 {
+		for _, v2 := range result[k1] {
 			total += v2
-			//fmt.Printf("%s: %d, %.2f \n", k2, v2.lineNum, v2.percent)
 		}
 
-		for k2, v2 := range v1 {
+		lanSlice := make([]string, 0, len(result[k1]))
+		for k2 := range result[k1] {
+			lanSlice = append(lanSlice, k2)
+		}
+		sort.Strings(lanSlice)
+
+		for _, k2 := range lanSlice {
+			v2 := result[k1][k2]
 			percent := float64(v2) / float64(total) * 100
 			fmt.Printf("%s: %d, %.2f%% \n", k2, v2, percent)
 		}
@@ -184,14 +214,8 @@ func wakDir(project, dir string, n *sync.WaitGroup, fileInfos chan item) {
 		}
 
 		subdir := filepath.Join(dir, entry.Name())
-		if entry.IsDir() {
-			if isFilter(*expDir, entry.Name()) {
-				continue
-			}
-
-			n.Add(1)
-			go wakDir(project, subdir, n, fileInfos)
-		} else {
+		switch mode := entry.Mode(); {
+		case mode.IsRegular():
 			if isFilter(*expFile, entry.Name()) {
 				continue
 			}
@@ -202,6 +226,31 @@ func wakDir(project, dir string, n *sync.WaitGroup, fileInfos chan item) {
 			}
 
 			readFile(project, subdir, fileInfos)
+		case mode.IsDir():
+			if isFilter(*expDir, entry.Name()) {
+				continue
+			}
+
+			n.Add(1)
+			go wakDir(project, subdir, n, fileInfos)
+		case mode&os.ModeSymlink != 0:
+			if isFilter(*expDir, entry.Name()) {
+				continue
+			}
+
+			abPath, err := filepath.EvalSymlinks(subdir)
+			if err != nil {
+				fmt.Printf("eval symlinks error %s err, err: %v\n", subdir, err)
+				continue
+			}
+
+			// 不在项目里说明之前并未统计，因此需要统计一次
+			if !strings.Contains(abPath, project) {
+				n.Add(1)
+				go wakDir(project, dir, n, fileInfos)
+			}
+		default:
+			fmt.Printf("unsovled link: %s \n", dir)
 		}
 	}
 }
