@@ -24,7 +24,7 @@ var (
 	expFile       = flag.String("xf", "LICENSE|Dockerfile", "去除文件")
 	expComment    = flag.Bool("xc", true, "是否去除注释")
 	checkFile     = flag.String("f", "h,c,h,hpp,hxx,cpp,cc,cxx,c++", "待查文件类型")
-	checkFileSet  = strings.ToLower(*checkFile)
+	checkFileSet  = ""
 	sema          = make(chan struct{}, *rnum)
 )
 
@@ -38,6 +38,7 @@ type item struct {
 func main() {
 	t := time.Now()
 	flag.Parse()
+	checkFileSet = strings.ToLower(strings.TrimSpace(*checkFile))
 
 	// 遍历目录
 	var n sync.WaitGroup
