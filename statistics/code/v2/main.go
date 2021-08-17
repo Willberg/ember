@@ -22,6 +22,7 @@ var (
 	rnum          = flag.Int("n", 10, "并发数")
 	expDir        = flag.String("xd", "tests|fail2ban|venv|bin|vendor|kernel_liteos_a", "去除目录")
 	expFile       = flag.String("xf", "LICENSE|Dockerfile", "去除文件")
+	expComment    = flag.Bool("xc", true, "是否去除注释")
 	checkFile     = flag.String("f", "h,c,h,hpp,hxx,cpp,cc,cxx,c++", "待查文件类型")
 	checkFileSet  = strings.ToLower(*checkFile)
 	sema          = make(chan struct{}, *rnum)
@@ -294,6 +295,7 @@ func readFile(project, link string, fileInfos chan item) {
 
 	var lineNum int64
 	isRead := true
+	isComment := false
 	buf := bufio.NewReader(f)
 	for {
 		line, isPrefix, err := buf.ReadLine()
@@ -307,8 +309,41 @@ func readFile(project, link string, fileInfos chan item) {
 		}
 
 		//fmt.Printf("line: %s\n", line)
-		if isPrefix != true && len(line) > 0 {
-			lineNum++
+		/*dfs*/
+		/*
+			dfs
+		*/
+		codeLine := string(line)
+		codeLine = strings.TrimSpace(codeLine)
+		if isPrefix != true && len(codeLine) > 0 {
+			if *expComment {
+				if !isComment {
+					if strings.HasPrefix(codeLine, "//") {
+						////fmt.Println(codeLine)
+						continue
+					}
+
+					if strings.HasPrefix(codeLine, "/*") {
+						if strings.HasSuffix(codeLine, "*/") {
+							//fmt.Println(codeLine)
+							continue
+						} else {
+							//fmt.Println(codeLine)
+							isComment = true
+						}
+					} else {
+						lineNum++
+					}
+				} else {
+					//fmt.Println(codeLine)
+					if strings.HasSuffix(codeLine, "*/") {
+						isComment = false
+						//fmt.Println(codeLine)
+					}
+				}
+			} else {
+				lineNum++
+			}
 		}
 	}
 
