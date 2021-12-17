@@ -71,8 +71,12 @@ func getUrls(p string) *list.List {
 	}
 
 	retList := list.New()
+	set := make(map[string]bool)
 	for _, line := range strings.Split(string(bytes), "\n") {
-		retList.PushBack(line)
+		if _, ok := set[line]; !ok {
+			set[line] = true
+			retList.PushBack(line)
+		}
 	}
 
 	return retList
