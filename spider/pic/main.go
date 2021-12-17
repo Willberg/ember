@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/list"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,8 +11,44 @@ import (
 	"strings"
 )
 
+var (
+	crawlFile = flag.String("f", "", "抓取图片链接的文件")
+	savePath  = flag.String("p", "", "抓取图片存放路径")
+	dirName   = flag.String("d", "", "抓取图片存放文件夹名")
+)
+
 func main() {
-	crawl("/home/john/Pictures/图库/测试", "/home/john/Pictures/图库")
+	flag.Parse()
+
+	if "" == *crawlFile || "" == *savePath || "" == *dirName {
+		fmt.Println("参数不对")
+		return
+	}
+
+	if !isExists(*crawlFile) {
+		fmt.Println("抓取图片链接的文件不存在")
+		return
+	}
+	sp := path.Join(*savePath, *dirName)
+	if sp == *crawlFile {
+		fmt.Println("抓取图片链接的文件与存放的目录名冲突")
+		return
+	}
+	if !isExists(sp) {
+		err := os.MkdirAll(sp, 0755)
+		if err != nil {
+			fmt.Printf("创建目录%s失败", sp)
+			return
+		}
+	}
+	crawl(*crawlFile, sp)
+}
+
+func isExists(s string) bool {
+	if _, err := os.Stat(s); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 func crawl(linkPath, saveDir string) {
