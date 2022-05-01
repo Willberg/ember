@@ -115,6 +115,7 @@ loop:
 		select {
 		case im, ok := <-fileInfos:
 			if !ok {
+				// 单独的break，只能跳出select语句，无法跳出for 和 select双层语句
 				break loop
 			}
 			putResult(result, im)
