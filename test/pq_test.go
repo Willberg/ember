@@ -3,6 +3,8 @@ package test
 import (
 	"container/heap"
 	"fmt"
+	"github.com/emirpasic/gods/queues/priorityqueue"
+	"github.com/emirpasic/gods/utils"
 	"testing"
 )
 
@@ -44,5 +46,18 @@ func TestPq(t *testing.T) {
 	heap.Push(student, one)
 	for student.Len() > 0 {
 		fmt.Printf("%v\n", heap.Pop(student))
+	}
+}
+
+func TestPriorityQueue(t *testing.T) {
+	pq := priorityqueue.NewWith(func(a, b interface{}) int {
+		// "-" descending order
+		return utils.IntComparator(a.(int), b.(int))
+	})
+	pq.Enqueue(2)
+	pq.Enqueue(1)
+	for !pq.Empty() {
+		v, _ := pq.Dequeue()
+		fmt.Println(v)
 	}
 }
