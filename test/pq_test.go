@@ -15,16 +15,16 @@ type stu struct {
 
 type Stu []stu
 
-func (s *Stu) Len() int {
-	return len(*s)
+func (s Stu) Len() int {
+	return len(s)
 }
 
-func (s *Stu) Less(i, j int) bool {
-	return (*s)[i].age < (*s)[j].age
+func (s Stu) Less(i, j int) bool {
+	return s[i].age < s[j].age
 }
 
-func (s *Stu) Swap(i, j int) {
-	(*s)[i], (*s)[j] = (*s)[j], (*s)[i]
+func (s Stu) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 func (s *Stu) Push(x interface{}) {
