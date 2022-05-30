@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 )
 
@@ -119,19 +120,53 @@ func TestPoint(t *testing.T) {
 	fmt.Println(o)
 
 	arr := [][]int{{1, 1}, {2, 2}}
-	// 此处的a只是副本
-	for i, a := range arr {
-		a = append(a, i)
-		fmt.Printf("%d,", len(a))
+	// sa为指向相应位置的指针
+	for i, sa := range arr {
+		// append之后数组扩容，指向了别处，因此原来数组不变
+		sa = append(sa, i)
+		fmt.Printf("%d,", len(sa))
 	}
 	fmt.Println("")
 	for i := range arr {
 		fmt.Printf("%d,", len(arr[i]))
-		// 此处的arr[i]指对应的二维数组中相应的元素
+		// 此处的arr[i]指对应的二维数组中相应的元素， append之后数组扩容，但是又重新赋值给了arr[i]，因此原来数组发生改变
 		arr[i] = append(arr[i], i)
 	}
 	fmt.Println("")
-	for _, a := range arr {
-		fmt.Printf("%d,", len(a))
+	for i := range arr {
+		fmt.Printf("%d,", len(arr[i]))
 	}
+	fmt.Println("")
+
+	arr1 := [][]int{{1, 2}, {3, 4}}
+	for _, sa := range arr1 {
+		// sa指向的数组交换位置， sa值（指针）不变，因此原来数据交换位置
+		sort.Slice(sa, func(i, j int) bool {
+			return sa[i] > sa[j]
+		})
+	}
+	for _, sa := range arr1 {
+		fmt.Print("(")
+		for _, v := range sa {
+			fmt.Printf("%d,", v)
+		}
+		fmt.Print("),")
+	}
+	fmt.Println("")
+
+	arr2 := [2][]int{{1, 2}, {3, 4}}
+	for _, sa := range arr2 {
+		// sa指向的数组交换位置， sa值（指针）不变，因此原来数据交换位置
+		sort.Slice(sa, func(i, j int) bool {
+			return sa[i] > sa[j]
+		})
+	}
+	for _, sa := range arr2 {
+		fmt.Print("(")
+		for _, v := range sa {
+			fmt.Printf("%d,", v)
+		}
+		fmt.Print("),")
+	}
+	fmt.Println("")
 }
