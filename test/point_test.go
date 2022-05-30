@@ -170,9 +170,26 @@ func TestPoint(t *testing.T) {
 	}
 	fmt.Println("")
 
-	arr3 := [][]int{{1, 2, 3, 4, 5, 6}, {2, 4, 6, 8, 10, 12}}
+	arr3 := [2][]int{{1, 2}, {3, 4}}
+	for _, sa := range arr3 {
+		// sa（可以认为是指针或是slice）在append之后指向别的空间，排序的是别的数组，原来的数据将不会交换位置
+		sa = append(sa, 1)
+		sort.Slice(sa, func(i, j int) bool {
+			return sa[i] > sa[j]
+		})
+	}
+	for _, sa := range arr3 {
+		fmt.Print("(")
+		for _, v := range sa {
+			fmt.Printf("%d,", v)
+		}
+		fmt.Print("),")
+	}
+	fmt.Println("")
+
+	arr4 := [][]int{{1, 2, 3, 4, 5, 6}, {2, 4, 6, 8, 10, 12}}
 	// 更内层的arr变量名覆盖了外层的arr变量名
-	for _, arr := range arr3 {
+	for _, arr := range arr4 {
 		for _, v := range arr {
 			fmt.Printf("%d,", v)
 		}
