@@ -169,4 +169,13 @@ func TestPoint(t *testing.T) {
 		fmt.Print("),")
 	}
 	fmt.Println("")
+
+	arr3 := [][]int{{1, 2, 3, 4, 5, 6}, {2, 4, 6, 8, 10, 12}}
+	// 更内层的arr变量名覆盖了外层的arr变量名
+	for _, arr := range arr3 {
+		for _, v := range arr {
+			fmt.Printf("%d,", v)
+		}
+		fmt.Println("")
+	}
 }
