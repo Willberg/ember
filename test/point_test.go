@@ -117,4 +117,21 @@ func TestPoint(t *testing.T) {
 	fmt.Println(o)
 	changeValueS(&o, 2)
 	fmt.Println(o)
+
+	arr := [][]int{{1, 1}, {2, 2}}
+	// 此处的a只是副本
+	for i, a := range arr {
+		a = append(a, i)
+		fmt.Printf("%d,", len(a))
+	}
+	fmt.Println("")
+	for i := range arr {
+		fmt.Printf("%d,", len(arr[i]))
+		// 此处的arr[i]指对应的二维数组中相应的元素
+		arr[i] = append(arr[i], i)
+	}
+	fmt.Println("")
+	for _, a := range arr {
+		fmt.Printf("%d,", len(a))
+	}
 }
