@@ -15,6 +15,7 @@ var (
 	crawlFile = flag.String("f", "", "抓取图片链接的文件")
 	savePath  = flag.String("p", "", "抓取图片存放路径")
 	dirName   = flag.String("d", "", "抓取图片存放文件夹名")
+	headers   = flag.String("h", "", "get请求的headers")
 )
 
 func main() {
@@ -86,14 +87,28 @@ func getUrls(p string) *list.List {
 }
 
 func crawlBinFile(link string) *[]byte {
-	resp, err := http.Get(link)
+	req, err := http.NewRequest("GET", link, nil)
+	if err != nil {
+		fmt.Printf("%s error, reason: %s", link, err)
+		return nil
+	}
+	if *headers != "" {
+		kvs := strings.Split(*headers, "|")
+		for _, s := range kvs {
+			kv := strings.Split(s, ": ")
+			if len(kv) == 2 {
+				req.Header.Add(kv[0], kv[1])
+			}
+		}
+	}
+	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		fmt.Printf("%s error, reason: %s", link, err)
 		return nil
 	}
 
 	if resp.StatusCode != 200 {
-		fmt.Printf("%s error, reason: %s", link, resp.StatusCode)
+		fmt.Printf("%s error, reason: %d", link, resp.StatusCode)
 		return nil
 	}
 
