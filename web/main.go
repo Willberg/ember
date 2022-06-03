@@ -1,16 +1,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
+var (
+	port = flag.String("p", "20000", "监控的端口")
+)
+
 func main() {
+	flag.Parse()
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("localhost:20000", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%s", *port), nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +40,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	bs := strings.Split(string(body), "&")
 	sb.WriteString(strings.Join(bs, "\n"))
-	fmt.Printf("%s", sb.String())
+	sb.WriteString("\n\n\n")
+	fmt.Fprintf(os.Stdout, "%s", sb.String())
 	fmt.Fprintf(w, "%s", sb.String())
 }
