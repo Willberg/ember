@@ -80,3 +80,29 @@ func TestPanic1(t *testing.T) {
 	// 宕机之后代码不会执行， 宕机会传递, 除非recover
 	g(3)
 }
+
+type Student struct {
+	name  string
+	class string
+	age   int
+}
+
+func (s Student) changeName(name string) {
+	s.name = name
+}
+
+func (s *Student) changeClass(class string) {
+	s.class = class
+}
+
+func TestReceiver(t *testing.T) {
+	s := Student{"name0", "class0", 0}
+	// 接收者是s的副本，修改的是副本的name, s的name不会改变
+	fmt.Println(s.name)
+	s.changeName("name1")
+	fmt.Println(s.name)
+	// 接收者是指针的副本，修改了s的class，会修改原值
+	fmt.Println(s.class)
+	s.changeClass("class1")
+	fmt.Println(s.class)
+}
