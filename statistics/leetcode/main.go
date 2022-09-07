@@ -30,9 +30,9 @@ type Leetcode struct {
 	RankV2 int `json:"rank_v2"`
 }
 
-func main() {
-	for i := 1; i <= 49; i++ {
-		res, err := http.Get(fmt.Sprintf("https://leetcode.cn/contest/api/ranking/biweekly-contest-86/?pagination=%d&region=local", i))
+func helper(name string, start, end int) {
+	for i := start; i <= end; i++ {
+		res, err := http.Get(fmt.Sprintf("https://leetcode.cn/contest/api/ranking/%s/?pagination=%d&region=local", name, i))
 		if err != nil {
 			fmt.Errorf("%v", err)
 			return
@@ -43,10 +43,12 @@ func main() {
 		if err != nil {
 			fmt.Errorf("%v", err)
 		}
-		ls := rank.TotalRank
-		fmt.Println(len(ls))
-		for _, l := range ls {
+		for _, l := range rank.TotalRank {
 			fmt.Printf("%s, score: %d, rank: %d, rankV2: %d\n", l.RealName, l.Score, l.Rank, l.RankV2)
 		}
 	}
+}
+
+func main() {
+	helper("weekly-contest-309", 1, 100)
 }
