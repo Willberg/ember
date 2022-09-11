@@ -19,7 +19,6 @@ func TestHeap(t *testing.T) {
 
 func TestIntHeap(t *testing.T) {
 	h := &IntHeap{}
-	heap.Init(h)
 	heap.Push(h, 2)
 	heap.Push(h, 1)
 	heap.Push(h, 3)
