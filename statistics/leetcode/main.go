@@ -50,5 +50,5 @@ func helper(name string, start, end int) {
 }
 
 func main() {
-	helper("weekly-contest-309", 1, 100)
+	helper("biweekly-contest-87", 1, 100)
 }
