@@ -1,69 +1,100 @@
 package main
 
 import (
+	. "ember/algorithm/loadbalance/robin"
 	"fmt"
-	"math/rand"
 	"sync"
-	"sync/atomic"
-	"time"
 )
 
-var (
-	req int32 = 0
-)
-
-type LoadBalancer struct {
-	client []*Client
-	size   int32
-}
-
-type Client struct {
-	name string
-}
-
-func NewBalancer(size int32) *LoadBalancer {
-	loadBalancer := &LoadBalancer{client: make([]*Client, size), size: size}
-	for i := 0; i < int(size); i++ {
-		loadBalancer.client[i] = &Client{name: fmt.Sprintf("client:%d", i)}
+func normalSmoothRobinTest() {
+	var pairs []Pair
+	pairs = append(pairs, Pair{Ip: "192.168.0.1", Weight: 5})
+	pairs = append(pairs, Pair{Ip: "192.168.0.2", Weight: 2})
+	pairs = append(pairs, Pair{Ip: "192.168.0.3", Weight: 1})
+	record := make(map[string][]int)
+	for i, p := range pairs {
+		record[p.Ip] = []int{p.Weight, i}
 	}
-	return loadBalancer
+	cnt := make(map[string]int)
+	ps := CreateSmoothRobin(pairs)
+	for i := 0; i < 16; i++ {
+		ip := ps.GetPeer()
+		cnt[ip]++
+		fmt.Println(ip, record[ip][0], record[ip][1])
+	}
+	for k, v := range cnt {
+		fmt.Println(k, v)
+	}
+	fmt.Printf("\n\n\n")
 }
 
-// 随机算法
-func (l *LoadBalancer) getClientRand() *Client {
-	rand.Seed(time.Now().UnixNano())
-	idx := rand.Int31n(100) % l.size
-	return l.client[idx]
+func createSmoothRobin(once *sync.Once, r *Robin) {
+	once.Do(func() {
+		var pairs []Pair
+		pairs = append(pairs, Pair{Ip: "192.168.0.1", Weight: 5})
+		pairs = append(pairs, Pair{Ip: "192.168.0.2", Weight: 2})
+		pairs = append(pairs, Pair{Ip: "192.168.0.3", Weight: 1})
+		*r = CreateSmoothRobin(pairs)
+		fmt.Println("smooth robin init...")
+	})
 }
 
-// 轮询算法
-func (l *LoadBalancer) getClientRoundRobin() *Client {
-	req := atomic.AddInt32(&req, 1)
-	return l.client[req%l.size]
+func parallelSmoothRobinTest() {
+	var wg sync.WaitGroup
+	var once sync.Once
+	var r Robin
+	n := 5
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(pid int, once *sync.Once, r *Robin) {
+			createSmoothRobin(once, r)
+			for i := 0; i < 16; i++ {
+				fmt.Printf("%d: Get %s\n", pid, (*r).GetPeer())
+			}
+			wg.Done()
+		}(i, &once, &r)
+	}
+	wg.Wait()
+	fmt.Printf("\n\n\n")
 }
 
-func (c *Client) Do() {
-	fmt.Println(c.name)
+func normalRobin() {
+	r := CreateRobin([]string{"192.168.0.1", "192.168.0.2", "192.168.0.3"})
+	for i := 0; i < 12; i++ {
+		ip := r.GetPeer()
+		fmt.Println(ip)
+	}
+	fmt.Printf("\n\n\n")
+}
+
+func createNormalRobin(once *sync.Once, r *Robin) {
+	once.Do(func() {
+		*r = CreateRobin([]string{"192.168.0.1", "192.168.0.2", "192.168.0.3"})
+	})
+}
+
+func parallelNormalRobin() {
+	var wg sync.WaitGroup
+	n := 5
+	wg.Add(5)
+	var once sync.Once
+	var r Robin
+	for i := 0; i < n; i++ {
+		go func(once *sync.Once, r *Robin) {
+			for i := 0; i < 12; i++ {
+				createNormalRobin(once, r)
+				ip := (*r).GetPeer()
+				fmt.Println(ip)
+			}
+			wg.Done()
+		}(&once, &r)
+	}
+	wg.Wait()
 }
 
 func main() {
-	loadBalance := NewBalancer(4)
-
-	fmt.Println("随机:")
-	for i := 0; i < 10; i++ {
-		client := loadBalance.getClientRand()
-		client.Do()
-	}
-
-	fmt.Println("轮询:")
-	var n sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		n.Add(1)
-		go func() {
-			client := loadBalance.getClientRoundRobin()
-			client.Do()
-			n.Done()
-		}()
-		n.Wait()
-	}
+	normalSmoothRobinTest()
+	parallelSmoothRobinTest()
+	normalRobin()
+	parallelNormalRobin()
 }
