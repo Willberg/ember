@@ -8,20 +8,18 @@ import (
 
 func main() {
 	rw := MyRWLock{}
-	v, n := 0, 5
+	v, n, c := 0, 100, 10000
 	var wg sync.WaitGroup
 	wg.Add(n)
 	for i := 0; i < n; i++ {
 		go func(gid int) {
-			for i := 0; i < 10; i++ {
+			for i := 0; i < c; i++ {
+				rw.Lock()
+				v++
+				rw.UnLock()
 				rw.RLock()
 				fmt.Printf("%d, v = %d\n", gid, v)
 				rw.RUnLock()
-				rw.Lock()
-				cur := v
-				cur++
-				v = cur
-				rw.UnLock()
 			}
 			wg.Done()
 		}(i)
