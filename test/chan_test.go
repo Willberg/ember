@@ -33,3 +33,83 @@ func TestChan(t *testing.T) {
 	}()
 	wg.Wait()
 }
+
+func TestChan0(t *testing.T) {
+	ch := make(chan int, 4)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	defer wg.Wait()
+	go func() {
+		for i := 1; i <= 10; i++ {
+			ch <- i
+			time.Sleep(100 * time.Millisecond)
+		}
+		close(ch)
+		wg.Done()
+	}()
+	for i := 0; i < 2; i++ {
+		go func(p int) {
+		loop:
+			for {
+				select {
+				case x, ok := <-ch:
+					// 通道被关闭之后，接受操作会一直接受对应类型的零值，发送操作会宕机
+					if !ok {
+						break loop
+					}
+					fmt.Printf("%d, %d\n", p, x)
+					time.Sleep(500 * time.Millisecond)
+				}
+			}
+			wg.Done()
+		}(i)
+	}
+
+}
+
+func TestChan1(t *testing.T) {
+	pn, cn, pnn, chn := 5, 20, 4000, 10
+	var pw, cw time.Duration = 10, 50
+	ch := make(chan string, chn)
+	var pwg, cwg sync.WaitGroup
+	pwg.Add(pn)
+	cwg.Add(cn)
+	defer cwg.Wait()
+	for i := 0; i < pn; i++ {
+		go func(i int) {
+			for j := 1; j <= pnn; j++ {
+				ch <- fmt.Sprintf("pid:%d, v=%d, time: %s", i, j, time.Now().Format("2006-01-02 15:04:05"))
+				time.Sleep(pw * time.Millisecond)
+			}
+			pwg.Done()
+		}(i)
+	}
+	for i := 0; i < cn; i++ {
+		go func(i int) {
+		loop:
+			for {
+				select {
+				case s, ok := <-ch:
+					if !ok {
+						break loop
+					}
+					fmt.Println(fmt.Sprintf("%s, c:%d, now: %s", s, i, time.Now().Format("2006-01-02 15:04:05")))
+					time.Sleep(cw * time.Millisecond)
+				}
+			}
+			cwg.Done()
+		}(i)
+	}
+	pwg.Wait()
+	close(ch)
+}
+
+func TestChan2(t *testing.T) {
+	ch := make(chan int, 10)
+	ch <- 1
+	v, ok := <-ch
+	fmt.Println(v, ok)
+	close(ch)
+	v, ok = <-ch
+	fmt.Println(v, ok)
+}
