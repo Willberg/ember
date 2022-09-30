@@ -57,11 +57,11 @@ func (pq *PriorityQueue) up(pos int) {
 func (pq *PriorityQueue) down(pos int) {
 	for pos < pq.size {
 		small, l := pos, 2*pos+1
-		if l < pq.size && !pq.less(small, l) {
+		if l < pq.size && pq.less(l, small) {
 			small = l
 		}
 		r := l + 1
-		if r < pq.size && !pq.less(small, r) {
+		if r < pq.size && pq.less(r, small) {
 			small = r
 		}
 		if small == pos {
