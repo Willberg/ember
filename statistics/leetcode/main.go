@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"ember/fs"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 type Rank struct {
@@ -21,16 +26,26 @@ type Leetcode struct {
 	RealName string `json:"real_name"`
 	//CountryCode   string `json:"country_code"`
 	//CountryName   string `json:"country_name"`
-	Rank  int `json:"rank"`
-	Score int `json:"score"`
-	//FinishName    int    `json:"finish_time"`
+	Rank       int `json:"rank"`
+	Score      int `json:"score"`
+	FinishTime int `json:"finish_time"`
 	//GlobalRanking int    `json:"global_ranking"`
 	//DataRegion    string `json:"data_region"`
 	//AvatarUrl     string `json:"avatar_url"`
 	RankV2 int `json:"rank_v2"`
 }
 
-func helper(name string, start, end int) {
+func helper(name, path string, start, end int, startTime time.Time) {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Errorf("%v", err)
+		return
+	}
+	defer func() {
+		err := file.Close()
+		fmt.Errorf("%v", err)
+		return
+	}()
 	for i := start; i <= end; i++ {
 		res, err := http.Get(fmt.Sprintf("https://leetcode.cn/contest/api/ranking/%s/?pagination=%d&region=local", name, i))
 		if err != nil {
@@ -43,12 +58,41 @@ func helper(name string, start, end int) {
 		if err != nil {
 			fmt.Errorf("%v", err)
 		}
+		sb := &strings.Builder{}
 		for _, l := range rank.TotalRank {
-			fmt.Printf("%s, score: %d, rank: %d, rankV2: %d\n", l.RealName, l.Score, l.Rank, l.RankV2)
+			subTime := int(time.Unix(int64(l.FinishTime), 0).Sub(startTime).Seconds())
+			useTime := fmt.Sprintf("%d时%d分%d秒", subTime/3600, subTime%3600/60, subTime%60)
+			s := fmt.Sprintf("%s, score: %d, rank: %d, rankV2: %d, finishTime:%s\n", l.RealName, l.Score, l.Rank, l.RankV2, useTime)
+			fmt.Print(s)
+			sb.WriteString(s)
+		}
+		write := bufio.NewWriter(file)
+		_, err = write.WriteString(sb.String())
+		if err != nil {
+			fmt.Errorf("%v", err)
+		}
+		err = write.Flush()
+		if err != nil {
+			fmt.Errorf("%v", err)
 		}
 	}
 }
 
+type Contest struct {
+	Name     string `json:"name"`
+	Start    int    `json:"start"`
+	End      int    `json:"end"`
+	DateTime string `json:"datetime"`
+}
+
 func main() {
-	helper("biweekly-contest-87", 1, 100)
+	con, ok := fs.ReadJson("/home/john/mine/workplace/go/ember/fs/contest.json", &Contest{})
+	if !ok {
+		fmt.Errorf("%v\n", con)
+		return
+	}
+	contest := con.(*Contest)
+	path := fmt.Sprintf("/home/john/Desktop/%s.txt", contest.Name)
+	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", contest.DateTime, time.Local)
+	helper(contest.Name, path, contest.Start, contest.End, startTime)
 }

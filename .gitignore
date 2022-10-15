@@ -19,3 +19,5 @@ vendor/
 .idea
 
 keys.yml
+
+*.json
