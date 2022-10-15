@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"ember/pattern/singleton"
@@ -11,13 +11,13 @@ func TestSingleton(t *testing.T) {
 	var n sync.WaitGroup
 	for i := 0; i < 100; i++ {
 		n.Add(1)
-		go func(n *sync.WaitGroup) {
+		go func() {
 			defer n.Done()
 			hungryInstance := singleton.GetHungrySingletonInstance()
 			lazyInstance := singleton.GetLazySingletonInstance()
 			onceInstance := singleton.GetLazySingletonInstanceByOnce()
 			fmt.Printf("%v %v %v\n", &hungryInstance.Name, &lazyInstance.Name, &onceInstance.Name)
-		}(&n)
+		}()
 	}
 	n.Wait()
 }
