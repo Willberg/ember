@@ -68,3 +68,29 @@ func TestMethodReflect(t *testing.T) {
 	ret := f.Call(params)
 	fmt.Println(ret[0].Int(), ret[1].String(), animal.Name)
 }
+
+var m = map[string]reflect.Value{}
+
+func get(url string, f interface{}) {
+	m[url] = reflect.ValueOf(f)
+}
+
+func invoke(url string, args ...interface{}) {
+	funcValue, _ := m[url]
+	// 构造函数参数, 传入两个整型值
+	var paramList []reflect.Value
+	for _, v := range args {
+		paramList = append(paramList, reflect.ValueOf(v))
+	}
+	// 反射调用函数
+	retList := funcValue.Call(paramList)
+	// 获取第一个返回值, 取整数值
+	fmt.Println(retList[0].Int())
+}
+
+func TestMap1(t *testing.T) {
+	get("test", func(a, b int) int {
+		return a + b
+	})
+	invoke("test", 10, 20)
+}
