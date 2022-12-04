@@ -1,8 +1,7 @@
-package main
+package common
 
 import (
 	"bufio"
-	"ember/fs"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,7 +34,7 @@ type Leetcode struct {
 	RankV2 int `json:"rank_v2"`
 }
 
-func helper(name, path string, start, end int, startTime time.Time) {
+func Process(name, path string, start, end int, startTime time.Time) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Errorf("%v", err)
@@ -83,18 +82,4 @@ type Contest struct {
 	Start    int    `json:"start"`
 	End      int    `json:"end"`
 	DateTime string `json:"datetime"`
-}
-
-func main() {
-	dir, _ := os.Getwd()
-	dir += "/statistics/leetcode/"
-	con, ok := fs.ReadJson(dir+"contest.json", &Contest{})
-	if !ok {
-		fmt.Errorf("%v\n", con)
-		return
-	}
-	contest := con.(*Contest)
-	path := fmt.Sprintf(dir+"%s.txt", contest.Name)
-	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", contest.DateTime, time.Local)
-	helper(contest.Name, path, contest.Start, contest.End, startTime)
 }
