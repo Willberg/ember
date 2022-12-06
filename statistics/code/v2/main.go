@@ -18,12 +18,12 @@ import (
 
 var (
 	singleProject = flag.Bool("s", true, "是否单独项目")
-	fpath         = flag.String("p", "/home/john/mine/workplace/c", "项目位置")
+	fpath         = flag.String("p", "", "项目位置")
 	rnum          = flag.Int("n", 10, "并发数")
-	expDir        = flag.String("xd", "tests|fail2ban|venv|bin|vendor|kernel_liteos_a", "去除目录")
-	expFile       = flag.String("xf", "LICENSE|Dockerfile", "去除文件")
+	expDir        = flag.String("xd", "", "去除目录")
+	expFile       = flag.String("xf", "", "去除文件")
 	expComment    = flag.Bool("xc", true, "是否去除注释")
-	checkFile     = flag.String("f", "h,c,h,hpp,hxx,cpp,cc,cxx,c++", "待查文件类型")
+	checkFile     = flag.String("f", "", "待查文件类型")
 	checkFileSet  = ""
 	sema          = make(chan struct{}, *rnum)
 )
@@ -38,6 +38,9 @@ type item struct {
 func main() {
 	t := time.Now()
 	flag.Parse()
+	if len(*fpath) == 0 {
+		log.Fatal("请选择目录")
+	}
 	checkFileSet = strings.ToLower(strings.TrimSpace(*checkFile))
 
 	// 遍历目录
