@@ -16,16 +16,21 @@ import (
 	"time"
 )
 
+const (
+	IMG = "bmp|jpg|png|tif|gif|pcx|tga|exif|fpx|svg|psd|cdr|pcd|dxf|ufo|eps|ai|raw|WMF|webp|avif|apng"
+)
+
 var (
-	singleProject = flag.Bool("s", true, "是否单独项目")
-	fpath         = flag.String("p", "", "项目位置")
-	rnum          = flag.Int("n", 10, "并发数")
-	expDir        = flag.String("xd", "", "去除目录")
-	expFile       = flag.String("xf", "", "去除文件")
-	expComment    = flag.Bool("xc", true, "是否去除注释")
-	checkFile     = flag.String("f", "", "待查文件类型")
-	checkFileSet  = ""
-	sema          = make(chan struct{}, *rnum)
+	singleProject  = flag.Bool("s", true, "是否单独项目")
+	fpath          = flag.String("p", "", "项目位置")
+	rnum           = flag.Int("n", 10, "并发数")
+	expDir         = flag.String("xd", "", "去除目录")
+	expFile        = flag.String("xf", "", "去除文件")
+	expComment     = flag.Bool("xc", true, "是否去除注释")
+	checkFile      = flag.String("f", "", "待查文件类型")
+	closeUnRegular = flag.Bool("c", true, "是否去除无文件类型的文件")
+	checkFileSet   = ""
+	sema           = make(chan struct{}, *rnum)
 )
 
 type item struct {
@@ -71,6 +76,16 @@ func main() {
 			}
 		} else {
 			if isFilter(*expFile, f.Name()) {
+				continue
+			}
+
+			// 去除图片
+			if isFilter(IMG, f.Name()) {
+				continue
+			}
+
+			// 根据条件去除无文件类型的文件
+			if *closeUnRegular && !strings.Contains(f.Name()[:len(f.Name())-1], ".") {
 				continue
 			}
 		}
@@ -199,7 +214,14 @@ func printResult(result map[string]map[string]int64) {
 		for k2 := range result[k1] {
 			lanSlice = append(lanSlice, k2)
 		}
-		sort.Strings(lanSlice)
+		// 按行数排名, 然后按文件名排名
+		sort.Slice(lanSlice, func(i, j int) bool {
+			li, lj := result[k1][lanSlice[i]], result[k1][lanSlice[j]]
+			if li != lj {
+				return li > lj
+			}
+			return lanSlice[i] < lanSlice[j]
+		})
 
 		for _, k2 := range lanSlice {
 			v2 := result[k1][k2]
@@ -226,8 +248,18 @@ func wakDir(project, dir string, n *sync.WaitGroup, fileInfos chan item) {
 				continue
 			}
 
+			// 去除图片
+			if isFilter(IMG, entry.Name()) {
+				continue
+			}
+
 			// 如果待查文件类型存在，则只考虑对应类型的文件
 			if isFilterFileWithSuffix(entry.Name()) {
+				continue
+			}
+
+			// 根据条件去除无文件类型的文件
+			if *closeUnRegular && !strings.Contains(entry.Name()[:len(entry.Name())-1], ".") {
 				continue
 			}
 
