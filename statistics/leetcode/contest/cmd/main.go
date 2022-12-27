@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "ember/statistics/leetcode/common"
+	. "ember/statistics/leetcode/contest/common"
 	"flag"
 	"fmt"
 	"log"

@@ -2,7 +2,7 @@ package main
 
 import (
 	"ember/fs"
-	. "ember/statistics/leetcode/common"
+	. "ember/statistics/leetcode/contest/common"
 	"fmt"
 	"os"
 	"time"
@@ -10,7 +10,7 @@ import (
 
 func main() {
 	dir, _ := os.Getwd()
-	dir += "/statistics/leetcode/ide/"
+	dir += "/statistics/leetcode/contest/ide/"
 	con, ok := fs.ReadJson(dir+"contest.json", &Contest{})
 	if !ok {
 		fmt.Errorf("%v\n", con)
