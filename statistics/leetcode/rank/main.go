@@ -134,6 +134,7 @@ func main() {
 			}
 			fmt.Printf("正在统计国内排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
+		printResult(q)
 		fmt.Printf("国内参赛较多，排名较低的数量：%d, 总数：%d, 比例：%0.2f\n", len(q), cnt, float64(len(q))/float64(cnt))
 	} else {
 		var rank GlobalRank
@@ -176,8 +177,13 @@ func main() {
 			}
 			fmt.Printf("正在统计国际排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
+		printResult(q)
 		fmt.Printf("国际参赛较多，排名较低的数量：%d, 总数：%d, 比例：%0.2f\n", len(q), cnt, float64(len(q))/float64(cnt))
 	}
+	fmt.Printf("用时：%d\n", time.Now().Unix()-start)
+}
+
+func printResult(q []Node) {
 	sort.Slice(q, func(i, j int) bool {
 		if q[i].rank != q[j].rank {
 			return q[i].rank < q[j].rank
@@ -187,7 +193,6 @@ func main() {
 	for _, r := range q {
 		fmt.Printf("%s, 排名：%d, 参赛数量：%d\n", r.name, r.rank, r.contestCount)
 	}
-	fmt.Printf("用时：%d\n", time.Now().Unix()-start)
 }
 
 func post(client *http.Client, payload *strings.Reader, rank interface{}) {
