@@ -28,6 +28,7 @@ func main() {
 	if len(*name) == 0 {
 		log.Fatal("请填写周赛名字")
 	}
+	*dt = *dt + ":00"
 	startTime, err := time.ParseInLocation("2006-01-02 15:04:05", *dt, time.Local)
 	if err != nil {
 		log.Fatal("请填写正确的周赛开始时间")
