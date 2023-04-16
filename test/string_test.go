@@ -20,4 +20,10 @@ func TestStringEqual(t *testing.T) {
 	fmt.Println(ret) //  false
 	fmt.Printf(RED+"%s"+RESET+"\n", "Red")
 	fmt.Printf(BLACK+"%s"+RESET+"\n", "BLACK")
+	fmt.Println(add("a", "b"))
+	fmt.Println(add(3, 4))
+}
+
+func add[T int | string](a, b T) T {
+	return a + b
 }
