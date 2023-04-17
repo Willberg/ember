@@ -2,8 +2,8 @@ package common
 
 import (
 	"github.com/go-yaml/yaml"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 type env struct {
@@ -17,7 +17,7 @@ func GetApiKey(p string) string {
 		return e.AK
 	}
 
-	data, err := ioutil.ReadFile(p)
+	data, err := os.ReadFile(p)
 	if err != nil {
 		log.Fatal(err)
 	}

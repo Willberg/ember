@@ -2,11 +2,11 @@ package fs
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 )
 
 func ReadJson(path string, inf interface{}) (interface{}, bool) {
-	bs, err := ioutil.ReadFile(path)
+	bs, err := os.ReadFile(path)
 	if err != nil {
 		return err, false
 	}
