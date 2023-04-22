@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,7 +89,7 @@ func main() {
 	} else {
 		ts = "{\"query\":\"{\\n  globalRanking(page: %d) {\\n    totalUsers\\n    userPerPage\\n    rankingNodes {\\n      currentGlobalRanking\\n  ranking\\n    dataRegion\\n      isDeleted\\n      user {\\n    profile {\\n    realName\\n      }\\n }\\n    }\\n  }\\n}\",\"variables\":{}}"
 	}
-	caCert, err := ioutil.ReadFile(*caPath)
+	caCert, err := os.ReadFile(*caPath)
 	if err != nil {
 		log.Fatal(err)
 	}
