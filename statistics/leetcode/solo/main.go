@@ -74,8 +74,8 @@ func main() {
 		}
 		fmt.Printf("正在处理第%d组\n", start+1)
 	}
-	for _, r := range ranks {
-		fmt.Printf("%s, %d\n", r.realName, r.score)
+	for i, r := range ranks {
+		fmt.Printf("%d, %s, %d\n", i, r.realName, r.score)
 	}
 }
 
