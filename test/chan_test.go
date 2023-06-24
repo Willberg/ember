@@ -1,6 +1,7 @@
 package test
 
 import (
+	"ember/datastruct/comap"
 	"fmt"
 	"sync"
 	"testing"
@@ -112,4 +113,33 @@ func TestChan2(t *testing.T) {
 	close(ch)
 	v, ok = <-ch
 	fmt.Println(v, ok)
+}
+
+func TestMyConcurrentChan1(t *testing.T) {
+	cmap := comap.NewMyConcurrentMap()
+	n := sync.WaitGroup{}
+	n.Add(4)
+	for i := 0; i < 2; i++ {
+		go func() {
+			fmt.Println("读取1")
+			v, err := cmap.Get(1, 5*time.Second)
+			fmt.Println("读取1 结束")
+			if err != nil {
+				fmt.Printf("%v", err)
+				return
+			}
+			fmt.Println(v)
+			n.Done()
+		}()
+	}
+	time.Sleep(2 * time.Second)
+	for i := 0; i < 2; i++ {
+		go func() {
+			fmt.Println("写入1")
+			cmap.Put(1, 1)
+			fmt.Println("写入1 结束")
+			n.Done()
+		}()
+	}
+	n.Wait()
 }
