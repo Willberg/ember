@@ -106,7 +106,7 @@ func main() {
 		Transport: tr,
 	}
 
-	cnt := 0
+	cnt1, cnt2 := 0, 0
 	pageNo, q1, q2 := 1, make([]Node, 0), make([]Node, 0)
 	payload := strings.NewReader(fmt.Sprintf(ts, pageNo))
 	if *t == 1 {
@@ -114,13 +114,13 @@ func main() {
 		post(client, payload, &rank)
 		for _, r := range rank.Data.LocalRanking.RankingNodes {
 			if r.AttendedContestCount >= *myContestCount {
-				cnt++
+				cnt1++
 				if r.CurrentRatingRanking > *myRank {
 					q1 = append(q1, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 				}
 			}
 			if r.CurrentRatingRanking <= *myRank {
-				cnt++
+				cnt2++
 				if r.AttendedContestCount >= *myContestCount {
 					q2 = append(q2, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 				}
@@ -134,13 +134,13 @@ func main() {
 			post(client, payload, &rank)
 			for _, r := range rank.Data.LocalRanking.RankingNodes {
 				if r.AttendedContestCount >= *myContestCount {
-					cnt++
+					cnt1++
 					if r.CurrentRatingRanking > *myRank {
 						q1 = append(q1, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 					}
 				}
 				if r.CurrentRatingRanking <= *myRank {
-					cnt++
+					cnt2++
 					if r.AttendedContestCount >= *myContestCount {
 						q2 = append(q2, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 					}
@@ -149,9 +149,9 @@ func main() {
 			fmt.Printf("正在统计国内排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
 		printResult(q1, *printQ1)
-		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt, float64(len(q1))/float64(cnt))
+		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt1, float64(len(q1))/float64(cnt1))
 		printResult(q2, !*printQ1)
-		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt, float64(len(q2))/float64(cnt))
+		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt2, float64(len(q2))/float64(cnt2))
 	} else {
 		var rank GlobalRank
 		post(client, payload, &rank)
@@ -164,13 +164,13 @@ func main() {
 				}
 			}
 			if rc >= *myContestCount {
-				cnt++
+				cnt1++
 				if r.CurrentGlobalRanking > *myRank {
 					q1 = append(q1, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 				}
 			}
 			if r.CurrentGlobalRanking <= *myRank {
-				cnt++
+				cnt2++
 				if rc >= *myContestCount {
 					q2 = append(q2, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 				}
@@ -191,13 +191,13 @@ func main() {
 					}
 				}
 				if rc >= *myContestCount {
-					cnt++
+					cnt1++
 					if r.CurrentGlobalRanking > *myRank {
 						q1 = append(q1, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 					}
 				}
 				if r.CurrentGlobalRanking <= *myRank {
-					cnt++
+					cnt2++
 					if rc >= *myContestCount {
 						q2 = append(q2, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 					}
@@ -206,9 +206,9 @@ func main() {
 			fmt.Printf("正在统计国际排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
 		printResult(q1, *printQ1)
-		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt, float64(len(q1))/float64(cnt))
+		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt1, float64(len(q1))/float64(cnt1))
 		printResult(q2, !*printQ1)
-		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt, float64(len(q2))/float64(cnt))
+		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt2, float64(len(q2))/float64(cnt2))
 	}
 	fmt.Printf("用时：%d\n", time.Now().Unix()-start)
 }
