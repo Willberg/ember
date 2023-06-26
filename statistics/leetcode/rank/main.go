@@ -20,6 +20,7 @@ var (
 	caPath         = flag.String("p", "/Users/bill/shell/leetcode.cer", "请输入leetcode证书位置")
 	myRank         = flag.Int("r", 34291, "请输入排名")
 	myContestCount = flag.Int("c", 65, "请输入参赛数量")
+	printQ1        = flag.Bool("b", true, "打印q1")
 )
 
 type RealName struct {
@@ -83,6 +84,7 @@ func main() {
 		fmt.Println("请输入排名和参赛数量")
 		return
 	}
+	fmt.Printf("t: %d, p: %s, r: %d, c: %d, b: %v\n", *t, *caPath, *myRank, *myContestCount, *printQ1)
 	var ts string
 	if *t == 1 {
 		ts = "{\"query\": \"{\\n  localRankingV2(page: %d) {\\n    page\\n    totalUsers\\n    userPerPage\\n    rankingNodes {\\n      attendedContestCount\\n      currentRatingRanking\\n      dataRegion\\n      isDeleted\\n      user {\\n        realName\\n      }\\n    }\\n  }\\n}\",\n  \"variables\": {}\n}"
@@ -105,7 +107,7 @@ func main() {
 	}
 
 	cnt := 0
-	pageNo, q := 1, make([]Node, 0)
+	pageNo, q1, q2 := 1, make([]Node, 0), make([]Node, 0)
 	payload := strings.NewReader(fmt.Sprintf(ts, pageNo))
 	if *t == 1 {
 		var rank LocalRank
@@ -114,7 +116,13 @@ func main() {
 			if r.AttendedContestCount >= *myContestCount {
 				cnt++
 				if r.CurrentRatingRanking > *myRank {
-					q = append(q, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
+					q1 = append(q1, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
+				}
+			}
+			if r.CurrentRatingRanking <= *myRank {
+				cnt++
+				if r.AttendedContestCount >= *myContestCount {
+					q2 = append(q2, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 				}
 			}
 		}
@@ -128,14 +136,22 @@ func main() {
 				if r.AttendedContestCount >= *myContestCount {
 					cnt++
 					if r.CurrentRatingRanking > *myRank {
-						q = append(q, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
+						q1 = append(q1, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
+					}
+				}
+				if r.CurrentRatingRanking <= *myRank {
+					cnt++
+					if r.AttendedContestCount >= *myContestCount {
+						q2 = append(q2, Node{r.User.Name, r.CurrentRatingRanking, r.AttendedContestCount})
 					}
 				}
 			}
 			fmt.Printf("正在统计国内排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
-		printResult(q)
-		fmt.Printf("国内参赛较多，排名较低的数量：%d, 总数：%d, 比例：%0.2f\n", len(q), cnt, float64(len(q))/float64(cnt))
+		printResult(q1, *printQ1)
+		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt, float64(len(q1))/float64(cnt))
+		printResult(q2, !*printQ1)
+		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt, float64(len(q2))/float64(cnt))
 	} else {
 		var rank GlobalRank
 		post(client, payload, &rank)
@@ -150,7 +166,13 @@ func main() {
 			if rc >= *myContestCount {
 				cnt++
 				if r.CurrentGlobalRanking > *myRank {
-					q = append(q, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
+					q1 = append(q1, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
+				}
+			}
+			if r.CurrentGlobalRanking <= *myRank {
+				cnt++
+				if rc >= *myContestCount {
+					q2 = append(q2, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 				}
 			}
 		}
@@ -171,27 +193,37 @@ func main() {
 				if rc >= *myContestCount {
 					cnt++
 					if r.CurrentGlobalRanking > *myRank {
-						q = append(q, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
+						q1 = append(q1, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
+					}
+				}
+				if r.CurrentGlobalRanking <= *myRank {
+					cnt++
+					if rc >= *myContestCount {
+						q2 = append(q2, Node{r.User.P.Name, r.CurrentGlobalRanking, rc})
 					}
 				}
 			}
 			fmt.Printf("正在统计国际排名，页码：%d, 进度：%.4f\n", i, float64(i)/float64(pages)*100)
 		}
-		printResult(q)
-		fmt.Printf("国际参赛较多，排名较低的数量：%d, 总数：%d, 比例：%0.2f\n", len(q), cnt, float64(len(q))/float64(cnt))
+		printResult(q1, *printQ1)
+		fmt.Printf("参赛不少于我且排名比我低的：%d, 参赛不少于我的总数：%d, 比例：%0.2f\n", len(q1), cnt, float64(len(q1))/float64(cnt))
+		printResult(q2, !*printQ1)
+		fmt.Printf("排名比我高且参赛不少于我的：%d, 排名比我高的总数：%d, 比例：%0.2f\n", len(q2), cnt, float64(len(q2))/float64(cnt))
 	}
 	fmt.Printf("用时：%d\n", time.Now().Unix()-start)
 }
 
-func printResult(q []Node) {
+func printResult(q []Node, isPrint bool) {
 	sort.Slice(q, func(i, j int) bool {
 		if q[i].rank != q[j].rank {
 			return q[i].rank < q[j].rank
 		}
 		return q[i].contestCount > q[j].contestCount
 	})
-	for _, r := range q {
-		fmt.Printf("%s, 排名：%d, 参赛数量：%d\n", r.name, r.rank, r.contestCount)
+	if isPrint {
+		for _, r := range q {
+			fmt.Printf("%s, 排名：%d, 参赛数量：%d\n", r.name, r.rank, r.contestCount)
+		}
 	}
 }
 
