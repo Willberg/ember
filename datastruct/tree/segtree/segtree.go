@@ -97,22 +97,25 @@ func (s *Segment) Set(key, val int) {
 func (s *Segment) ToString() {
 	keys := s.mp.Keys()
 	fmt.Print("[")
-	if len(keys) > 0 {
-		mp := redblacktree.NewWithIntComparator()
-		pre := s.query(s.segTree, s.l, s.r, keys[0].(int), keys[0].(int))
+	i, n, pre := 0, len(keys), 0
+	for ; i < n; i++ {
+		key := keys[i]
+		pre = s.query(s.segTree, s.l, s.r, key.(int), key.(int))
 		if pre != 0 {
-			fmt.Printf("[%d, %d]", keys[0].(int), pre)
-			mp.Put(keys[0].(int), nil)
+			fmt.Printf("[%d, %d]", key.(int), pre)
+			break
 		}
-		for _, key := range keys[1:] {
-			val := s.query(s.segTree, s.l, s.r, key.(int), key.(int))
-			if val != pre {
-				fmt.Printf(",[%d, %d]", key.(int), val)
-				mp.Put(key.(int), val)
-				pre = val
-			}
+		s.mp.Remove(key.(int))
+	}
+	for j := i + 1; j < n; j++ {
+		key := keys[j]
+		val := s.query(s.segTree, s.l, s.r, key.(int), key.(int))
+		if val != pre {
+			fmt.Printf(",[%d, %d]", key.(int), val)
+			pre = val
+		} else {
+			s.mp.Remove(key.(int))
 		}
-		s.mp = mp
 	}
 	fmt.Println("]")
 }
